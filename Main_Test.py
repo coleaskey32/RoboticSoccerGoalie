@@ -16,19 +16,19 @@ def imShow(path):
   plt.imshow(cv2.cvtColor(resized_image, cv2.COLOR_BGR2RGB))
   #plt.show()
 
-
+        
 # Load the shared library
-darknet_lib = ctypes.CDLL('/home/colea/darknet/libdarknet.so')
+darknet_lib = ctypes.CDLL('/home/cole/Desktop/SeniorProject/darknet/libdarknet.so')
 
 
 ################## Main Program ##################
 
 
 # Capturing from webcam
-cap = cv2.VideoCapture(0, cv2.CAP_V4L)
+#cap = cv2.VideoCapture(0, cv2.CAP_V4L)
 
 # Command to execute image detection 
-command = ['/home/colea/darknet/darknet', 'detector', 'test', '/home/colea/darknet/data/obj.data', '/home/colea/darknet/cfg/yolov4-tiny-custom.cfg', '/home/colea/darknet/cfg/yolov4.weights', '-ext_output', '/home/colea/S1.jpg']
+command = ['/home/cole/Desktop/SeniorProject/darknet/darknet', 'detector', 'test', '/home/colea/darknet/data/obj.data', '/home/colea/darknet/cfg/yolov4-tiny-custom.cfg', '/home/colea/darknet/cfg/yolov4.weights', '-ext_output', '/home/cole/Desktop/SeniorProject/frame.jpeg']
 
 # Execute the command
 process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
