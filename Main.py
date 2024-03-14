@@ -23,65 +23,75 @@ darknet_lib = ctypes.CDLL('/home/colea/darknet/libdarknet.so')
 
 def videoFeed_process(conn):
     cap = cv2.VideoCapture(0)  # Replace 'your_video_file.mp4' with the path to your video file or 0 for webcam
+    
     while cap.isOpened():
         ret, frame = cap.read()
+        
         if not ret:
             break
+            
         conn.send(frame)
+        
     cap.release()
     conn.close()
 
 
 def yolo_process(conn, result_conn):
+
     # Command to execute YOLO detection
-    yolo_command = ['/home/colea/darknet/darknet', 'detector', 'test', '/home/colea/darknet/data/obj.data', '/home/colea/darknet/cfg/yolov4-tiny-custom.cfg', '/home/colea/darknet/cfg/yolov4.weights', '-ext_output']
+    yolo_command = ['/home/colea/darknet/darknet', 'detector', 'test', '/home/colea/darknet/data/obj.data', '/home/colea/darknet/cfg/yolov4-tiny-custom.cfg', '/home/colea/darknet/cfg/yolov4.weights', '-ext_output', '/home/colea/frame.jpg']
 
     while True:
+        
+        # Take Frame from the Pipe with videoFeed 
         frame = conn.recv()
+        
         if frame is None:
             break
+            
         # Convert frame to JPEG format (YOLO expects image files)
         _, img_encoded = cv2.imencode('.jpg', frame)
         
+        # Write the encoded image to the correct image path
+        with open('/home/colea/frame.jpg', 'wb') as f:
+            f.write(img_encoded)
+            
         # Execute YOLO detection
         process = subprocess.Popen(yolo_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = process.communicate(input=img_encoded.tobytes())
         
-        # Send the detection results through the pipe to the result receiver process
+        # Wait for the process to terminate and get the return code
+        return_code = process.wait()
+
+        # Print return code
+        print("Return Code:", return_code)
+
+        # Check if the command execution was successful
+        if return_code != 0:
+            print("Error: Command execution failed with return code", return_code)
+        else:
+            print("Command executed successfully")
+            
+        # Send the detection results through the pipe to the OpticalFlow process
         result_conn.send(stdout)
         
     conn.close()
     result_conn.close()
 
+
 def opticalFlow_process(conn):
+
     while True:
+    
         result = conn.recv()
+        
         if result is None:
             break
+            
         # Process the YOLO detection results as needed
         print(result)  # Example: Print the detection results
+        
     conn.close()
 
-# Command to executeclear
-command = ['/home/colea/darknet/darknet', 'detector', 'test', '/home/colea/darknet/data/obj.data', '/home/colea/darknet/cfg/yolov4-tiny-custom.cfg', '/home/colea/darknet/cfg/yolov4.weights', '-ext_output', '/home/colea/S1.jpg']
-
-# Execute the command
-process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-# Wait for the process to terminate and get the return code
-return_code = process.wait()
-
-# Print return code
-print("Return Code:", return_code)
-
-# Check if the command execution was successful
-if return_code != 0:
-    print("Error: Command execution failed with return code", return_code)
-else:
-    print("Command executed successfully")
-    
-    
-imShow('predictions.jpg')
 
 ################## Main Program ##################
 
